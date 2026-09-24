@@ -117,6 +117,24 @@ h2.ct{font-family:"Barlow Condensed",sans-serif;font-size:31px;font-weight:600;m
 .opt.picked{border-color:var(--route);background:color-mix(in srgb,var(--route) 10%,var(--paper2))}
 .blank{border-bottom:1.5px solid var(--route);padding:0 2px;color:var(--route)}
 .blab{color:var(--contour2);font-size:14px;margin:12px 0 5px}
+.field{display:block;margin-bottom:14px}
+.field>span{display:block;font-family:"Barlow Condensed",sans-serif;font-size:15px;color:var(--ink2);margin-bottom:4px}
+.field textarea,.field input{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--paper2);
+  border:1px solid var(--rule);border-radius:2px;padding:9px 11px;resize:vertical}
+.field textarea{min-height:72px;line-height:1.45}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.seg button{font-family:"Barlow Condensed",sans-serif;font-size:16px;padding:7px 14px;border:1px solid var(--rule);
+  background:var(--paper2);border-radius:2px}
+.seg button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.orow{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:center;margin-bottom:6px}
+.mark{font-family:"Barlow Condensed",sans-serif;font-size:14px;width:34px;padding:6px 0;border:1px solid var(--rule);
+  background:var(--paper2);border-radius:2px;text-align:center}
+.mark.on{background:var(--solid);color:var(--paper);border-color:var(--solid)}
+.note{font-size:14px;color:var(--ink2);margin:-6px 0 14px;line-height:1.45}
+.err{color:var(--weak);font-size:14.5px;margin-bottom:12px}
+.tag{font-family:"Barlow Condensed",sans-serif;font-size:12.5px;color:var(--route);border:1px solid var(--route);
+  border-radius:2px;padding:1px 6px;margin-left:8px}
+.del{font-family:"Barlow Condensed",sans-serif;background:none;border:0;color:var(--weak);font-size:14px;padding:0}
 
 .empty{color:var(--ink2);padding:26px 0;max-width:56ch}
 footer{border-top:1px solid var(--rule);margin-top:34px;padding-top:12px;
@@ -138,7 +156,7 @@ footer button{background:none;border:0;color:var(--contour2);padding:0;text-deco
 <main id="app"></main>
 <footer>
   <span id="sync">Progress saves in this browser</span>
-  <span style="color:var(--route)">build 5 · 24 Sep</span>
+  <span style="color:var(--route)">build 6 · 24 Sep</span>
   <button id="themeBtn">Switch theme</button>
   <button id="expBtn">Export progress</button>
   <button id="impBtn">Import</button>
@@ -156,6 +174,11 @@ footer button{background:none;border:0;color:var(--contour2);padding:0;text-deco
 <script>
 const DATA = JSON.parse(document.getElementById('DATA').textContent);
 const VERBAL = JSON.parse(document.getElementById('VERBAL').textContent);
+let MYQ = [];                                  // questions you add yourself
+const QKEY = 'ascent-questions-v1';
+function loadQ(){ try{ const r=localStorage.getItem(QKEY); if(r) MYQ=JSON.parse(r)||[]; }catch(e){} }
+function saveQ(){ try{ localStorage.setItem(QKEY, JSON.stringify(MYQ)); }catch(e){} }
+const ALLQ = () => VERBAL.concat(MYQ);
 const CLUSTER_OF = {}; DATA.forEach(c=>c.w.forEach(x=>CLUSTER_OF[x[0]]=c.n));
 // pairs that sit in different clusters but are still confusable — never offered together
 const CONFUSABLE = {
@@ -259,7 +282,7 @@ function setSync(msg){
     msg || (n ? `${n} words tracked in this browser` : 'Progress saves in this browser');
 }
 function exportProgress(){
-  const blob = new Blob([JSON.stringify({p:P, log:LOG, at:now(), v:3}, null, 1)], {type:'application/json'});
+  const blob = new Blob([JSON.stringify({p:P, log:LOG, q:MYQ, at:now(), v:4}, null, 1)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'ascent-progress-' + new Date().toISOString().slice(0,10) + '.json';
@@ -271,7 +294,7 @@ function importProgress(file){
     try{
       const d = JSON.parse(fr.result);
       if(!d || !d.p) throw 0;
-      P = d.p; if(d.log) LOG = d.log; dirty = true; save(); render();
+      P = d.p; if(d.log) LOG = d.log; if(d.q){ MYQ = d.q; saveQ(); } dirty = true; save(); render();
     }catch(e){ setSync('That file was not a progress export'); }
   };
   fr.readAsText(file);
@@ -318,7 +341,7 @@ function render(){
   const t = tally(TAUGHT);
   document.getElementById('alt').innerHTML =
     `<b>${t.known}</b> holding · <b>${t.learning}</b> coming along · <b>${t.shaky}</b> forgetting often · ${t.new} not started`;
-  ({route:routeView, cluster:clusterView, study:studyView, quiz:quizView, review:reviewView, shaky:shakyView, verbal:verbalView, stats:statsView})[view.name]();
+  ({route:routeView, cluster:clusterView, study:studyView, quiz:quizView, review:reviewView, shaky:shakyView, verbal:verbalView, stats:statsView, editor:editorView})[view.name]();
   window.scrollTo({top:0});
 }
 
@@ -334,8 +357,9 @@ function routeView(){
   h += `<div class="acts" style="margin-top:22px">
     <button class="btn pri" id="revBtn" ${q?'':'disabled'}>Review ${q} due</button>
     <button class="btn" id="shkBtn" ${t.shaky?'':'disabled'}>Drill ${t.shaky} weak</button>
-    <button class="btn" id="vbBtn">GRE questions (${VERBAL.length})</button>
+    <button class="btn" id="vbBtn">GRE questions (${ALLQ().length})</button>
     <button class="btn" id="stBtn">Progress</button>
+    <button class="btn" id="edBtn">Add questions</button>
   </div>`;
   h += '<div class="bands">';
   GROUPS.forEach(([a,b,label])=>{
@@ -360,6 +384,7 @@ function routeView(){
   const sb=document.getElementById('shkBtn'); if(sb) sb.onclick=()=>{view={name:'shaky'};render();};
   document.getElementById('vbBtn').onclick=()=>{view={name:'verbal',i:0,sel:[],done:false,score:0};render();};
   document.getElementById('stBtn').onclick=()=>{view={name:'stats'};render();};
+  document.getElementById('edBtn').onclick=()=>{view={name:'editor',kind:'se',blanks:1,mark:[],err:''};render();};
   app.querySelectorAll('.st[data-c]').forEach(b=>b.onclick=()=>{view={name:'cluster',c:+b.dataset.c};render();});
 }
 
@@ -499,13 +524,14 @@ function shakyView(){
 
 function verbalView(){
   const v=view;
-  if(v.i>=VERBAL.length) return doneScreen(`${v.score} of ${VERBAL.length} right`, null);
-  const q=VERBAL[v.i];
+  const BANK=ALLQ();
+  if(v.i>=BANK.length) return doneScreen(`${v.score} of ${BANK.length} right`, null);
+  const q=BANK[v.i];
   const nBlanks = q.k==='tc' ? q.o.length : 1;
   if(!v.sel.length) v.sel = q.k==='se' ? [] : Array(nBlanks).fill(-1);
   const roman=['(i)','(ii)','(iii)'];
   let h=`<button class="back lab" id="bk">← Route</button>
-    <div class="prog">Question ${v.i+1} of ${VERBAL.length} · ${q.k==='tc'?'Text Completion':'Sentence Equivalence'} · ${v.score} right</div>
+    <div class="prog">Question ${v.i+1} of ${BANK.length} · ${q.k==='tc'?'Text Completion':'Sentence Equivalence'}${q.mine?' · yours':''} · ${v.score} right</div>
     <p class="qp">${q.t.replace(/___/g,'<span class="blank">______</span>')}</p>`;
   if(q.k==='se') h+=`<div class="hint lab" style="margin:-8px 0 12px">Choose the two that give the same meaning</div>`;
   q.o.forEach((set,bi)=>{
@@ -554,6 +580,134 @@ function verbalView(){
   };
   const nx=document.getElementById('nx');
   if(nx) nx.onclick=()=>{v.i++;v.sel=[];v.done=false;render();};
+}
+
+
+/* ---------- question editor ---------- */
+const SPEC = {                                   // real GRE shapes
+  tc1:{blanks:1, per:5, label:'Text Completion — one blank'},
+  tc2:{blanks:2, per:3, label:'Text Completion — two blanks'},
+  tc3:{blanks:3, per:3, label:'Text Completion — three blanks'},
+  se: {blanks:1, per:6, label:'Sentence Equivalence'}
+};
+function editorView(){
+  const v=view, sp=SPEC[v.kind||'se'];
+  const nB=sp.blanks, per=sp.per, isSE=(v.kind||'se')==='se';
+  if(!v.mark || v.mark.length!==nB) v.mark = Array(nB).fill(null).map(()=>isSE?[]:-1);
+  const roman=['(i)','(ii)','(iii)'];
+  let h=`<button class="back lab" id="bk">← Route</button>
+    <h2 class="ct">Add a question</h2>
+    <p class="cax">Questions you add join the bank and are stored in this browser. They travel with Export progress.</p>
+    <div class="seg">`;
+  Object.entries(SPEC).forEach(([k,o])=>
+    h+=`<button data-k="${k}" class="${(v.kind||'se')===k?'on':''}">${o.label}</button>`);
+  h+=`</div>`;
+  if(v.err) h+=`<div class="err">${v.err}</div>`;
+  h+=`<label class="field"><span>Sentence — type ___ where each blank goes</span>
+      <textarea id="sent" placeholder="The report was ___: forty pages restating what the board had said.">${v.sent||''}</textarea></label>`;
+  for(let b=0;b<nB;b++){
+    h+=`<div class="blab lab">${nB>1?roman[b]+' options':'Options'} — tap the ${isSE?'two that match':'correct one'}</div>`;
+    for(let i=0;i<per;i++){
+      const on = isSE ? v.mark[0].includes(i) : v.mark[b]===i;
+      h+=`<div class="orow">
+        <button class="mark ${on?'on':''}" data-b="${b}" data-i="${i}">${on?'✓':String.fromCharCode(65+i)}</button>
+        <input id="o${b}_${i}" value="${(v.opts&&v.opts[b]&&v.opts[b][i])||''}" placeholder="word">
+      </div>`;
+    }
+  }
+  h+=`<label class="field" style="margin-top:14px"><span>Explanation — shown after answering</span>
+      <textarea id="expl" placeholder="Why the answer is right, and why each other option fails.">${v.expl||''}</textarea></label>
+    <div class="acts"><button class="btn pri" id="saveQ">Save question</button>
+      <button class="btn" id="bulk">Paste several</button></div>`;
+  if(MYQ.length){
+    h+=`<div class="bandhead lab" style="margin-top:26px">Your questions — ${MYQ.length}</div><div class="wlist">`;
+    MYQ.forEach((q,i)=> h+=`<div class="wrow"><span class="dot" style="background:var(--route)"></span>
+      <span><span class="wd">${q.t.slice(0,72)}${q.t.length>72?'…':''}</span>
+        <span class="wdef">${q.k==='se'?'Sentence Equivalence':'Text Completion, '+q.o.length+' blank'+(q.o.length>1?'s':'')}</span>
+        <span class="wnote"><button class="del" data-del="${i}">Delete</button></span></span></div>`);
+    h+=`</div>`;
+  }
+  app.innerHTML=h;
+
+  const readFields=()=>{
+    v.sent=document.getElementById('sent').value;
+    v.expl=document.getElementById('expl').value;
+    v.opts=[]; for(let b=0;b<nB;b++){ v.opts[b]=[]; for(let i=0;i<per;i++) v.opts[b][i]=document.getElementById(`o${b}_${i}`).value; }
+  };
+  document.getElementById('bk').onclick=()=>{view={name:'route'};render();};
+  app.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+    readFields(); v.kind=b.dataset.k; v.mark=null; v.err=''; render(); });
+  app.querySelectorAll('.mark').forEach(b=>b.onclick=()=>{
+    readFields();
+    const bi=+b.dataset.b, i=+b.dataset.i;
+    if(isSE){ const k=v.mark[0].indexOf(i); if(k>=0) v.mark[0].splice(k,1); else if(v.mark[0].length<2) v.mark[0].push(i); }
+    else v.mark[bi]=i;
+    v.err=''; render();
+  });
+  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    if(!confirm('Delete this question?')) return;
+    MYQ.splice(+b.dataset.del,1); saveQ(); render();
+  });
+  document.getElementById('bulk').onclick=()=>{ view={name:'editor', kind:v.kind, bulkMode:true, mark:null, err:''}; bulkView(); };
+  document.getElementById('saveQ').onclick=()=>{
+    readFields();
+    const blanksInText=(v.sent.match(/___/g)||[]).length;
+    if(!v.sent.trim()) return fail('Write the sentence first.');
+    if(blanksInText!==nB) return fail(`This type needs exactly ${nB} blank${nB>1?'s':''} — type ___ ${nB} time${nB>1?'s':''}. Found ${blanksInText}.`);
+    for(let b=0;b<nB;b++) for(let i=0;i<per;i++)
+      if(!v.opts[b][i].trim()) return fail('Fill in every option box.');
+    if(isSE && v.mark[0].length!==2) return fail('Mark exactly two matching answers.');
+    if(!isSE && v.mark.some(x=>x<0)) return fail('Mark the correct option for every blank.');
+    if(!v.expl.trim()) return fail('Add an explanation — it is what you read when you get it wrong.');
+    const q = isSE
+      ? {k:'se', t:v.sent.trim(), o:[v.opts[0].map(x=>x.trim())], a:v.mark[0].slice().sort((x,y)=>x-y), e:v.expl.trim(), mine:1}
+      : {k:'tc', t:v.sent.trim(), o:v.opts.map(g=>g.map(x=>x.trim())), a:v.mark.slice(), e:v.expl.trim(), mine:1};
+    MYQ.push(q); saveQ();
+    view={name:'editor', kind:v.kind, mark:null, err:'', saved:true}; render();
+  };
+  function fail(m){ v.err=m; render(); }
+}
+
+function bulkView(){
+  const v=view;
+  app.innerHTML=`<button class="back lab" id="bk">← Add a question</button>
+    <h2 class="ct">Paste several</h2>
+    <p class="cax">One question per block, blank line between blocks. Mark each correct option with a star.</p>
+    <div class="note">SE<br>The report was ___ and added nothing.<br>*vacuous<br>*empty<br>prosaic<br>humdrum<br>evasive<br>terse<br>= vacuous and empty both mean without content.<br><br>TC<br>She was ___ about the outcome.<br>*sanguine<br>bereft<br>wary<br>curt<br>bleak<br>= sanguine means optimistic.</div>
+    ${v.err?`<div class="err">${v.err}</div>`:''}
+    <label class="field"><textarea id="blk" style="min-height:220px" placeholder="Paste here"></textarea></label>
+    <div class="acts"><button class="btn pri" id="go">Add them</button></div>`;
+  document.getElementById('bk').onclick=()=>{view={name:'editor',kind:v.kind,mark:null,err:''};render();};
+  document.getElementById('go').onclick=()=>{
+    const blocks=document.getElementById('blk').value.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+    let added=0, bad=[];
+    blocks.forEach((blk,bi)=>{
+      const lines=blk.split('\n').map(x=>x.trim()).filter(Boolean);
+      const kind=(lines[0]||'').toLowerCase();
+      if(kind!=='se'&&kind!=='tc'){ bad.push(bi+1); return; }
+      const sent=lines[1]||'';
+      const expl=(lines.find(l=>l.startsWith('='))||'').replace(/^=\s*/,'');
+      const opts=lines.slice(2).filter(l=>!l.startsWith('='));
+      const marks=[], clean=[];
+      opts.forEach((o,i)=>{ if(o.startsWith('*')){ marks.push(i); clean.push(o.slice(1).trim()); } else clean.push(o.trim()); });
+      const nb=(sent.match(/___/g)||[]).length;
+      if(!sent||!clean.length||!expl||!marks.length||nb<1){ bad.push(bi+1); return; }
+      if(kind==='se'){ if(marks.length!==2||nb!==1){ bad.push(bi+1); return; }
+        MYQ.push({k:'se',t:sent,o:[clean],a:marks,e:expl,mine:1}); }
+      else { if(marks.length!==nb){ bad.push(bi+1); return; }
+        const per=clean.length/nb;
+        if(!Number.isInteger(per)){ bad.push(bi+1); return; }
+        const groups=[], ans=[];
+        for(let b=0;b<nb;b++){ groups.push(clean.slice(b*per,(b+1)*per));
+          const m=marks.find(x=>x>=b*per&&x<(b+1)*per); if(m===undefined){bad.push(bi+1);return;} ans.push(m-b*per); }
+        MYQ.push({k:'tc',t:sent,o:groups,a:ans,e:expl,mine:1}); }
+      added++;
+    });
+    saveQ();
+    view={name:'editor',kind:v.kind,mark:null,
+      err: bad.length ? `Added ${added}. Blocks ${bad.join(', ')} were skipped — check the format.` : ''};
+    render();
+  };
 }
 
 function statsView(){
@@ -638,7 +792,7 @@ document.getElementById('expBtn').onclick=exportProgress;
 document.getElementById('impBtn').onclick=()=>document.getElementById('impFile').click();
 document.getElementById('impFile').onchange=e=>{ if(e.target.files[0]) importProgress(e.target.files[0]); };
 
-render(); load();
+render(); loadQ(); load();
 </script>
 </body>
 </html>
