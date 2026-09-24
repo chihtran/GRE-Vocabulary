@@ -9,10 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#E8E9E1; --paper2:#DEE0D6; --contour:#B4A98E; --contour2:#9C8E6E;
-  --ink:#252A26; --ink2:#5A6259; --route:#3A6480; --route-l:#6F97AE;
+  --paper:#F6F7F1; --paper2:#EBEDE4; --contour:#C3B99F; --contour2:#9C8E6E;
+  --ink:#232724; --ink2:#575F56; --route:#3A6480; --route-l:#6F97AE;
   --learn:#C08A3E; --solid:#4E7346; --weak:#A8453A;
-  --rule:#C8C9BD;
+  --rule:#DCDED1;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -66,8 +66,8 @@ header.top{
 }
 .st:hover .sn{color:var(--route)}
 .sn{font-family:"Barlow Condensed",sans-serif;font-size:19px;color:var(--contour2);font-variant-numeric:tabular-nums}
-.stt{font-family:"Barlow Condensed",sans-serif;font-size:18px;line-height:1.15}
-.sax{font-size:13.5px;color:var(--ink2);line-height:1.35;margin-top:1px}
+.stt{display:block;font-family:"Barlow Condensed",sans-serif;font-size:18px;line-height:1.2}
+.sax{display:block;font-size:13.5px;color:var(--ink2);line-height:1.4;margin-top:3px}
 .meter{width:96px}
 .meter .bar{height:5px;background:var(--paper2);border-radius:3px;overflow:hidden;display:flex}
 .meter .bar span{display:block;height:100%}
@@ -86,16 +86,16 @@ h2.ct{font-family:"Barlow Condensed",sans-serif;font-size:31px;font-weight:600;m
 .wlist{border-top:1px solid var(--rule)}
 .wrow{display:grid;grid-template-columns:10px 1fr;gap:12px;padding:10px 2px;border-bottom:1px solid var(--rule);align-items:baseline}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--paper2);margin-top:7px}
-.wd{font-family:"Barlow Condensed",sans-serif;font-size:19px}
-.wdef{font-size:15px;color:var(--ink2);margin-top:1px}
-.wnote{font-size:13.5px;color:var(--contour2);margin-top:3px}
+.wd{display:block;font-family:"Barlow Condensed",sans-serif;font-size:19px;line-height:1.25}
+.wdef{display:block;font-size:15px;color:var(--ink2);margin-top:2px;line-height:1.45}
+.wnote{display:block;font-size:13.5px;color:var(--contour2);margin-top:4px;line-height:1.4}
 
 /* card */
 .card{border:1px solid var(--rule);background:var(--paper2);border-radius:3px;padding:30px 24px;min-height:230px;
   display:flex;flex-direction:column;justify-content:center;text-align:center;margin-bottom:16px}
 .cw{font-family:"Barlow Condensed",sans-serif;font-size:42px;line-height:1.05}
-.cd{font-size:19px;margin-top:14px;max-width:46ch;margin-left:auto;margin-right:auto}
-.cn{font-size:14.5px;color:var(--ink2);margin-top:12px;max-width:50ch;margin-left:auto;margin-right:auto}
+.cd{display:block;font-size:19px;margin-top:14px;max-width:46ch;margin-left:auto;margin-right:auto}
+.cn{display:block;font-size:14.5px;color:var(--ink2);margin-top:12px;max-width:50ch;margin-left:auto;margin-right:auto}
 .hint{font-family:"Barlow Condensed",sans-serif;color:var(--ink2);font-size:15px}
 .prog{font-family:"Barlow Condensed",sans-serif;font-size:14px;color:var(--ink2);margin-bottom:10px;font-variant-numeric:tabular-nums}
 
@@ -582,9 +582,9 @@ function statsView(){
     </div>
     <div class="bandhead lab" style="margin-top:22px">Answering</div>
     <div class="wlist">
-      <div class="wrow"><span></span><span><span class="wd">${seen} answers recorded</span><span class="wdef">${today} in the last 24 hours</span></span></div>
-      <div class="wrow"><span></span><span><span class="wd">${acc===null?'—':acc+'% on the last '+last100.length}</span><span class="wdef">rolling accuracy across every mode</span></span></div>
-      <div class="wrow"><span></span><span><span class="wd">${queue().length} due now</span><span class="wdef">past their scheduled interval</span></span></div>
+      <div class="wrow"><span class="dot" style="background:transparent"></span><span><span class="wd">${seen} answers recorded</span><span class="wdef">${today} in the last 24 hours</span></span></div>
+      <div class="wrow"><span class="dot" style="background:transparent"></span><span><span class="wd">${acc===null?'—':acc+'% on the last '+last100.length}</span><span class="wdef">rolling accuracy across every mode</span></span></div>
+      <div class="wrow"><span class="dot" style="background:transparent"></span><span><span class="wd">${queue().length} due now</span><span class="wdef">past their scheduled interval</span></span></div>
     </div>`;
   if(worst.length){
     h += `<div class="bandhead lab" style="margin-top:22px">Missed most often</div><div class="wlist">`;
