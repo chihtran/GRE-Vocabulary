@@ -194,7 +194,7 @@ footer button{background:none;border:0;color:var(--contour2);padding:0;text-deco
 <main id="app"></main>
 <footer>
   <span id="sync">Progress saves in this browser</span>
-  <span style="color:var(--route)">build 87 · 28 Sep</span>
+  <span style="color:var(--route)">build 90 · 28 Sep</span>
   <button id="themeBtn">Switch theme</button>
   <button id="expBtn">Export progress</button>
   <button id="impBtn">Import</button>
@@ -963,11 +963,14 @@ function rcView(){
 function verbalView(){
   const v=view;
   if(!v.qs) v.qs = shuffle(ALLQ()).map(shuffleQuestion);   // new order every session
+  if(typeof v.i !== 'number') v.i = 0;
+  if(typeof v.score !== 'number') v.score = 0;
   const BANK=v.qs;
   if(v.i>=BANK.length) return doneScreen(`${v.score} of ${BANK.length} right`, null);
   const q=BANK[v.i];
   if(q.k==='rc') return rcView();
   const nBlanks = q.k==='tc' ? q.o.length : 1;
+  if(!v.sel) v.sel = [];
   if(!v.sel.length) v.sel = q.k==='se' ? [] : Array(nBlanks).fill(-1);
   const roman=['(i)','(ii)','(iii)'];
   let h=`<button class="back lab" id="bk">← Route</button>
@@ -1786,8 +1789,9 @@ function editorView(){
   if(MYQ.length){
     h+=`<div class="bandhead lab" style="margin-top:26px">Your questions — ${MYQ.length}</div><div class="wlist">`;
     MYQ.forEach((q,i)=> h+=`<div class="wrow"><span class="dot" style="background:var(--route)"></span>
-      <span><span class="wd">${q.t.slice(0,72)}${q.t.length>72?'…':''}</span>
-        <span class="wdef">${q.k==='se'?'Sentence Equivalence':'Text Completion, '+q.o.length+' blank'+(q.o.length>1?'s':'')}</span>
+      <span><span class="wd">${(q.k==='rc' ? q.p : q.t).slice(0,72)}${(q.k==='rc'?q.p:q.t).length>72?'…':''}</span>
+        <span class="wdef">${q.k==='rc'?`Reading Comprehension, ${q.qs.length} question${q.qs.length>1?'s':''}`
+          :q.k==='se'?'Sentence Equivalence':'Text Completion, '+q.o.length+' blank'+(q.o.length>1?'s':'')}</span>
         <span class="wnote"><button class="del" data-del="${i}">Delete</button></span></span></div>`);
     h+=`</div>`;
   }
